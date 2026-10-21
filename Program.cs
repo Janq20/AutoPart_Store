@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-
+using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddDbContext<MyApp.Data.ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 // Rejestracja kontrolerów i widoków MVC
 builder.Services.AddControllersWithViews();
-
 // Konfiguracja uwierzytelniania opartego o Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
