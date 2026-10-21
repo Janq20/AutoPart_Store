@@ -1,0 +1,44 @@
+@{
+    ViewData["Title"] = "Logowanie - AutoPart Store";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">AutoPart Store - Logowanie</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="Login" method="post">
+                        <div class="text-danger mb-3">@Html.ValidationSummary(true)</div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Adres e-mail</label>
+                            <input type="email" name="email" class="form-control" placeholder="janwojcik@gmail.com" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Hasło</label>
+                            <input type="password" name="password" class="form-control" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Zaloguj się</button>
+                    </form>
+
+                    <div class="text-center mt-3">
+                        <a asp-action="Register" class="text-decoration-none">Nie masz konta? Zarejestruj się</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
