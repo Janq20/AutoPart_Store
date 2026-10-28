@@ -1,0 +1,85 @@
+@model MyApp.Models.ProductFormViewModel
+@{
+    var isEdit = Model.Id != 0;
+    ViewData["Title"] = isEdit ? "Edycja produktu" : "Dodaj produkt";
+}
+
+<div class="container py-4">
+    <h1 class="h2 mb-4">@ViewData["Title"]</h1>
+    <form asp-action="@(isEdit ? "EditProduct" : "CreateProduct")" asp-route-id="@Model.Id" method="post" class="card card-body">
+        <input asp-for="Id" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Description" class="form-label"></label>
+            <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Price" class="form-label"></label>
+                <input asp-for="Price" class="form-control" type="number" min="0.01" step="0.01" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="StockQuantity" class="form-label"></label>
+                <input asp-for="StockQuantity" class="form-control" type="number" min="0" step="1" />
+                <span asp-validation-for="StockQuantity" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="MainCategoryId" class="form-label"></label>
+                <select asp-for="MainCategoryId" asp-items="Model.Categories" class="form-select">
+                    <option value="">Wybierz kategorię</option>
+                </select>
+                <span asp-validation-for="MainCategoryId" class="text-danger"></span>
+            </div>
+            <div class="col-md-4">
+                <label asp-for="SubcategoryId" class="form-label"></label>
+                <select asp-for="SubcategoryId" asp-items="Model.Subcategories" class="form-select" disabled="@(Model.Subcategories.Count == 0)">
+                    <option value="">Bez podkategorii</option>
+                </select>
+                <span asp-validation-for="SubcategoryId" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="IsActive" class="form-check-input" />
+            <label asp-for="IsActive" class="form-check-label"></label>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Zapisz produkt</button>
+            <a asp-action="Products" class="btn btn-outline-secondary">Anuluj</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const mainCategory = document.getElementById("MainCategoryId");
+        const subcategory = document.getElementById("SubcategoryId");
+        const selectedSubcategoryId = "@Model.SubcategoryId";
+
+        async function loadSubcategories(selectedId = "") {
+            subcategory.replaceChildren(new Option("Bez podkategorii", ""));
+            subcategory.disabled = true;
+            if (!mainCategory.value) return;
+
+            const response = await fetch(`/Catalog/Subcategories?parentCategoryId=${encodeURIComponent(mainCategory.value)}`);
+            if (!response.ok) return;
+
+            const categories = await response.json();
+            for (const category of categories) {
+                subcategory.add(new Option(category.name, category.id));
+            }
+            subcategory.disabled = categories.length === 0;
+            subcategory.value = selectedId;
+        }
+
+        mainCategory.addEventListener("change", () => loadSubcategories());
+        if (mainCategory.value) loadSubcategories(selectedSubcategoryId);
+    </script>
+}

@@ -1,0 +1,52 @@
+@model IReadOnlyList<MyApp.Models.Category>
+@{
+    ViewData["Title"] = "Kategorie asortymentu";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h1 class="h2 mb-0">Kategorie asortymentu</h1>
+        <div class="d-flex gap-2">
+            <a asp-action="Products" class="btn btn-outline-secondary">Produkty</a>
+            <a asp-action="CreateCategory" class="btn btn-primary">Dodaj kategorię</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+    @if (TempData["CategoryError"] is string categoryError)
+    {
+        <div class="alert alert-warning" role="alert">@categoryError</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Kategoria</th>
+                    <th>Kategoria nadrzędna</th>
+                    <th>Opis</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var category in Model)
+                {
+                    <tr>
+                        <td>@category.Name</td>
+                        <td>@(category.ParentCategory?.Name ?? "—")</td>
+                        <td>@category.Description</td>
+                        <td>
+                            <form asp-action="DeleteCategory" method="post">
+                                <input type="hidden" name="id" value="@category.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Usuń</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

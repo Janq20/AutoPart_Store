@@ -1,0 +1,64 @@
+@model IReadOnlyList<MyApp.Models.Product>
+@{
+    ViewData["Title"] = "Zarządzanie asortymentem";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h1 class="h2 mb-0">Zarządzanie asortymentem</h1>
+        <div class="d-flex gap-2">
+            <a asp-action="Categories" class="btn btn-outline-secondary">Kategorie</a>
+            <a asp-action="CreateProduct" class="btn btn-primary">Dodaj produkt</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Produkt</th>
+                    <th>Kategoria</th>
+                    <th>Cena</th>
+                    <th>Stan</th>
+                    <th>Status</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var product in Model)
+                {
+                    <tr>
+                        <td>@product.Name</td>
+                        <td>
+                            @if (product.Category?.ParentCategory is not null)
+                            {
+                                @($"{product.Category.ParentCategory.Name} / {product.Category.Name}")
+                            }
+                            else
+                            {
+                                @product.Category?.Name
+                            }
+                        </td>
+                        <td>@product.Price.ToString("F2") zł</td>
+                        <td>@product.StockQuantity</td>
+                        <td>@(product.IsActive ? "Aktywny" : "Ukryty")</td>
+                        <td class="d-flex gap-2">
+                            <a asp-action="EditProduct" asp-route-id="@product.Id" class="btn btn-sm btn-outline-primary">Edytuj</a>
+                            <form asp-action="ToggleProduct" method="post">
+                                <input type="hidden" name="id" value="@product.Id" />
+                                <button type="submit" class="btn btn-sm @(product.IsActive ? "btn-outline-danger" : "btn-outline-success")">
+                                    @(product.IsActive ? "Ukryj" : "Pokaż")
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

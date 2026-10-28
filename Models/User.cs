@@ -7,7 +7,7 @@ namespace MyApp.Models
         [Key]
         public int Id { get; set; }
 
-        [Required, EmailAddress]
+        [Required, EmailAddress, MaxLength(254)]
         public string Email { get; set; } = string.Empty;
 
         [Required]
@@ -20,7 +20,7 @@ namespace MyApp.Models
         public string LastName { get; set; } = string.Empty;
 
         [Required]
-        public string Role { get; set; } = "Klient"; // Klient, Pracownik, Administrator
+        public string Role { get; set; } = UserRoles.Client;
 
         public List<Address> Addresses { get; set; } = new();
     }

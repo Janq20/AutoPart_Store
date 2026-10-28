@@ -1,3 +1,4 @@
+@model MyApp.Models.LoginViewModel
 @{
     ViewData["Title"] = "Logowanie - AutoPart Store";
 }
@@ -19,16 +20,19 @@
                 </div>
                 <div class="card-body">
                     <form asp-action="Login" method="post">
+                        <input asp-for="ReturnUrl" type="hidden" />
                         <div class="text-danger mb-3">@Html.ValidationSummary(true)</div>
 
                         <div class="mb-3">
-                            <label class="form-label">Adres e-mail</label>
-                            <input type="email" name="email" class="form-control" placeholder="janwojcik@gmail.com" required />
+                            <label asp-for="Email" class="form-label">Adres e-mail</label>
+                            <input asp-for="Email" class="form-control" autocomplete="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Hasło</label>
-                            <input type="password" name="password" class="form-control" required />
+                            <label asp-for="Password" class="form-label">Hasło</label>
+                            <input asp-for="Password" class="form-control" autocomplete="current-password" />
+                            <span asp-validation-for="Password" class="text-danger"></span>
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">Zaloguj się</button>
@@ -38,6 +42,10 @@
                         <a asp-action="Register" class="text-decoration-none">Nie masz konta? Zarejestruj się</a>
                     </div>
                 </div>
+
+                @section Scripts {
+                    <partial name="_ValidationScriptsPartial" />
+                }
             </div>
         </div>
     </div>

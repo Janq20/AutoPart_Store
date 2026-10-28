@@ -1,0 +1,56 @@
+@model MyApp.Models.ManageUsersViewModel
+@{
+    ViewData["Title"] = "Zarządzanie użytkownikami";
+}
+
+<div class="container mt-4">
+    <h1 class="h3 mb-4">Zarządzanie użytkownikami</h1>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+
+    <div asp-validation-summary="All" class="text-danger"></div>
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Użytkownik</th>
+                    <th>E-mail</th>
+                    <th>Rola</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model.Users)
+                {
+                    <tr>
+                        <td>@user.FirstName @user.LastName</td>
+                        <td>@user.Email</td>
+                        <td>
+                            <form asp-action="ChangeRole" method="post" class="d-flex gap-2">
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <select name="role" class="form-select" aria-label="Rola użytkownika @user.Email">
+                                    @foreach (var role in MyApp.Models.UserRoles.All)
+                                    {
+                                        if (role == user.Role)
+                                        {
+                                            <option value="@role" selected>@role</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@role">@role</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="submit" class="btn btn-primary text-nowrap">Zapisz rolę</button>
+                            </form>
+                        </td>
+                        <td></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
