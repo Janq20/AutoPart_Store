@@ -1,3 +1,4 @@
 admin@autopartstore.local admin123
 pracownik1@autopartstore.local pracownik123
 pracownik2@autopartstore.local pracownik223
+Grzegorzrudy@gmail.com haslo123

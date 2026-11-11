@@ -16,7 +16,7 @@ namespace MyApp.Models
         [Display(Name = "Opis")]
         public string? Description { get; set; }
 
-        [Range(typeof(decimal), "0.01", "999999999", ErrorMessage = "Cena musi być większa od zera")]
+        [Range(0.01, 999999999, ErrorMessage = "Cena musi być większa od zera")]
         [Display(Name = "Cena (zł)")]
         public decimal Price { get; set; }
 

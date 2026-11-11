@@ -1,8 +1,142 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@using MyApp.Models
+@{
+    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    ViewData["Title"] = isAuthenticated ? "Panel główny" : "AutoPart Store";
 }
 
-<div class="d-flex flex-column align-items-center justify-content-center text-center" style="min-height: 65vh">
-    <h1 class="display-4 mb-2">Witamy</h1>
-    <p class="h3 mb-0">w sklepie AutoPart</p>
-</div>
+@if (!isAuthenticated)
+{
+    <section class="home-hero">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <span class="eyebrow">AUTOPART STORE &nbsp; / &nbsp; CZĘŚCI, KTÓRYM MOŻESZ ZAUFAĆ</span>
+                <h1 class="hero-title">Dobre części.<br /><span>Spokojna jazda.</span></h1>
+                <p class="hero-lead">
+                    Zamiast przekopywać pół internetu, znajdź potrzebną część w jednym miejscu.
+                    AutoPart Store pomaga ogarnąć auto bez ogarniania całego świata.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <a asp-controller="Account" asp-action="Register" class="btn btn-hero-primary">Załóż konto i zacznij <span aria-hidden="true">→</span></a>
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-hero-secondary">Mam już konto</a>
+                </div>
+                <div class="hero-note">
+                    <span class="status-dot"></span>
+                    Części do wielu marek i modeli
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="hero-visual">
+                    <div class="hero-photo-wrap">
+                        <img class="hero-photo" src="https://images.unsplash.com/photo-1486006920555-c77dcf18193c?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Części samochodowe w warsztacie" />
+                    </div>
+                    <div class="visual-card visual-card-top"><span>PREMIUM</span><br /><strong>JAKOŚĆ</strong></div>
+                    <div class="visual-card visual-card-bottom"><strong>24/7</strong><br />wsparcie</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-intro">
+        <div class="section-heading">
+            <span class="eyebrow">DLACZEGO AUTOPART?</span>
+            <h2>Bo samochód nie powinien być zagadką.</h2>
+            <p>Wybierasz część, a nie loterię. My zajmujemy się tym, żeby zakupy były proste, szybkie i bez historii typu „proszę pana, to na pewno pasuje?”.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <article class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?auto=format&amp;fit=crop&amp;w=700&amp;q=80" alt="Mechanik przy samochodzie" />
+                    </div>
+                    <div class="feature-body"><span class="feature-number">01</span><h2>Sprawdzone części</h2><p>Stawiamy na jakość, bo hamulce i zawieszenie to nie miejsce na eksperymenty.</p></div>
+                </article>
+            </div>
+            <div class="col-md-4">
+                <article class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://images.unsplash.com/photo-1625047509248-ec889cbff17f?auto=format&amp;fit=crop&amp;w=700&amp;q=80" alt="Części samochodowe" />
+                    </div>
+                    <div class="feature-body"><span class="feature-number">02</span><h2>Konkretny katalog</h2><p>Wyszukujesz, filtrujesz i wiesz, co jest dostępne. Bez archeologii w magazynie.</p></div>
+                </article>
+            </div>
+            <div class="col-md-4">
+                <article class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://images.unsplash.com/photo-1558981806-ec527fa84c39?auto=format&amp;fit=crop&amp;w=700&amp;q=80" alt="Detal samochodu" />
+                    </div>
+                    <div class="feature-body"><span class="feature-number">03</span><h2>Wsparcie, gdy trzeba</h2><p>Masz pytanie? Jesteśmy po to, żeby pomóc, a nie odesłać Cię do instrukcji na 48 stron.</p></div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-trust">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-7">
+                <span class="eyebrow">ZAKUPY BEZ NERWÓW</span>
+                <h2>Ty wybierasz część.<br /><span>My pilnujemy reszty.</span></h2>
+                <p>Przejrzyste ceny, dostępność produktów i wygodny koszyk. Wszystko po to, żebyś mógł wrócić do tego, co ważne — na przykład do jazdy, a nie do kolejnej godziny szukania.</p>
+            </div>
+            <div class="col-lg-5">
+                <div class="trust-list">
+                    <div><strong>01</strong><span>Przejrzyste informacje o produkcie</span></div>
+                    <div><strong>02</strong><span>Bezpieczne i wygodne zakupy</span></div>
+                    <div><strong>03</strong><span>Pomoc przed i po zakupie</span></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="about-section">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-5">
+                <img src="https://images.unsplash.com/photo-1504222490345-c075b6008014?auto=format&amp;fit=crop&amp;w=900&amp;q=85" alt="Samochód na drodze" class="about-image" />
+            </div>
+            <div class="col-lg-7">
+                <span class="eyebrow">KIM JESTEŚMY?</span>
+                <h2>AutoPart Store powstał z prostej potrzeby.</h2>
+                <p>Zauważyliśmy, że znalezienie właściwej części potrafi być trudniejsze niż sama naprawa. Dlatego stworzyliśmy miejsce, w którym kierowca, mechanik i osoba, która po prostu chce wreszcie uciszyć tę kontrolkę, znajdą coś dla siebie.</p>
+                <p>Zaczęliśmy od małego katalogu i dużej ambicji, a dziś rozwijamy sklep tak, żeby zakupy były konkretne, przejrzyste i pozbawione motoryzacyjnego żargonu.</p>
+            </div>
+        </div>
+    </section>
+}
+else if (User.IsInRole(UserRoles.Administrator))
+{
+    <section class="dashboard-hero dashboard-admin">
+        <span class="eyebrow">AUTOPART STORE / PANEL ADMINISTRATORA</span>
+        <h1>Witaj, @User.Identity?.Name</h1>
+        <p>Masz pełną kontrolę nad sklepem.</p>
+    </section>
+    <section class="dashboard-grid role-dashboard role-dashboard-admin">
+        <a asp-controller="Admin" asp-action="Products" class="dashboard-card"><span class="dashboard-icon">▦</span><strong>Asortyment</strong><small>Produkty, ceny i dostępność</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Categories" class="dashboard-card"><span class="dashboard-icon">⌗</span><strong>Kategorie</strong><small>Porządkuj katalog części</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Users" class="dashboard-card"><span class="dashboard-icon">♙</span><strong>Użytkownicy</strong><small>Zarządzaj rolami i dostępem</small><span class="dashboard-arrow">→</span></a>
+    </section>
+}
+else if (User.IsInRole(UserRoles.Employee))
+{
+    <section class="dashboard-hero dashboard-employee">
+        <span class="eyebrow">AUTOPART STORE / PANEL PRACOWNIKA</span>
+        <h1>Witaj, @User.Identity?.Name</h1>
+        <p>Tu ogarniesz asortyment szybciej niż klient zdąży powiedzieć „coś do Audi”.</p>
+    </section>
+    <section class="dashboard-grid role-dashboard role-dashboard-employee">
+        <a asp-controller="Admin" asp-action="Products" class="dashboard-card"><span class="dashboard-icon">▦</span><strong>Asortyment</strong><small>Dodawaj i aktualizuj produkty</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Categories" class="dashboard-card"><span class="dashboard-icon">⌗</span><strong>Kategorie</strong><small>Znajdź właściwe miejsce dla części</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Catalog" asp-action="Index" class="dashboard-card"><span class="dashboard-icon">⌕</span><strong>Podgląd katalogu</strong><small>Sprawdź ofertę jak klient</small><span class="dashboard-arrow">→</span></a>
+    </section>
+}
+else
+{
+    <section class="dashboard-hero dashboard-client">
+        <span class="eyebrow">AUTOPART STORE / PANEL KLIENTA</span>
+        <h1>Witaj, @User.Identity?.Name</h1>
+        <p>Twoje auto ma potrzeby. Dobrze, że jesteś — zajmiemy się resztą.</p>
+    </section>
+    <section class="dashboard-grid role-dashboard role-dashboard-client">
+        <a asp-controller="Catalog" asp-action="Index" class="dashboard-card"><span class="dashboard-icon">⌕</span><strong>Przeglądaj katalog</strong><small>Znajdź część do swojego samochodu</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Cart" asp-action="Index" class="dashboard-card"><span class="dashboard-icon">🛒</span><strong>Mój koszyk</strong><small>Sprawdź wybrane produkty</small><span class="dashboard-arrow">→</span></a>
+        <div class="dashboard-tip"><span class="eyebrow">DOBRA RADA</span><h2>Nie czekaj, aż kontrolka zacznie mrugać alfabetem Morse’a.</h2><p>Sprawdź katalog i zadbaj o auto wcześniej.</p><a asp-controller="Catalog" asp-action="Index" class="btn btn-primary">Zobacz części</a></div>
+    </section>
+}
