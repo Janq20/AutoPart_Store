@@ -13,7 +13,7 @@ namespace MyApp.Models
         [MaxLength(2000)]
         public string? Description { get; set; }
 
-        [Range(typeof(decimal), "0.01", "999999999")]
+        [Range(0.01, 999999999)]
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
 
