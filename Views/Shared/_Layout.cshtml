@@ -43,6 +43,12 @@
                                  User.IsInRole(MyApp.Models.UserRoles.Employee))
                             {
                                 <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="Orders">Zamówienia</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-controller="Admin" asp-action="InventoryTransactions">Ruchy magazynowe</a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link text-dark" asp-controller="Admin" asp-action="Products">Asortyment</a>
                                 </li>
                             }

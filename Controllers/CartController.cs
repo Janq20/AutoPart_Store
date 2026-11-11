@@ -159,28 +159,10 @@ namespace MyApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            foreach (var product in products)
-            {
-                var quantity = cart[product.Id];
-                var updatedRows = await _dbContext.Products
-                    .Where(item => item.Id == product.Id &&
-                                   item.IsActive &&
-                                   item.StockQuantity >= quantity)
-                    .ExecuteUpdateAsync(updates => updates
-                        .SetProperty(item => item.StockQuantity, item => item.StockQuantity - quantity));
-
-                if (updatedRows != 1)
-                {
-                    await transaction.RollbackAsync();
-                    TempData["CartError"] = "Stan magazynowy właśnie się zmienił. Sprawdź koszyk i spróbuj ponownie.";
-                    return RedirectToAction(nameof(Index));
-                }
-            }
-
             var order = new Order
             {
                 UserId = userId,
-                Status = "Nowe",
+                Status = OrderStatuses.New,
                 TotalAmount = products.Sum(product => product.Price * cart[product.Id]),
                 Items = products.Select(product => new OrderItem
                 {
@@ -192,10 +174,44 @@ namespace MyApp.Controllers
 
             _dbContext.Orders.Add(order);
             await _dbContext.SaveChangesAsync();
+
+            foreach (var product in products)
+            {
+                var quantity = cart[product.Id];
+                var stockAfter = product.StockQuantity - quantity;
+                var updatedRows = await _dbContext.Products
+                    .Where(item => item.Id == product.Id &&
+                                   item.IsActive &&
+                                   item.StockQuantity >= quantity)
+                    .ExecuteUpdateAsync(updates => updates
+                        .SetProperty(item => item.StockQuantity, item => item.StockQuantity - quantity));
+
+                if (updatedRows != 1)
+                {
+                    await transaction.RollbackAsync();
+                    _dbContext.ChangeTracker.Clear();
+                    TempData["CartError"] = "Stan magazynowy właśnie się zmienił. Sprawdź koszyk i spróbuj ponownie.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                _dbContext.InventoryTransactions.Add(new InventoryTransaction
+                {
+                    ProductId = product.Id,
+                    OrderId = order.Id,
+                    UserId = userId,
+                    Type = InventoryTransactionTypes.Sale,
+                    QuantityChange = -quantity,
+                    StockBefore = product.StockQuantity,
+                    StockAfter = stockAfter,
+                    Note = $"Sprzedaż w zamówieniu #{order.Id}."
+                });
+            }
+
+            await _dbContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
             HttpContext.Session.Remove(CartSessionKey);
-            TempData["CartMessage"] = "Zakup został zarejestrowany. Koszyk jest już pusty.";
+            TempData["CartMessage"] = $"Zamówienie #{order.Id} zostało złożone. Koszyk jest już pusty.";
             return RedirectToAction(nameof(Index));
         }
 

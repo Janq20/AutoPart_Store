@@ -1,0 +1,103 @@
+@model MyApp.Models.OrderDetailsViewModel
+@{
+    ViewData["Title"] = $"Zamówienie #{Model.Order.Id}";
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <h1 class="h2 mb-0">Zamówienie #@Model.Order.Id</h1>
+        <a asp-action="Orders" class="btn btn-outline-secondary">Wróć do zamówień</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">@successMessage</div>
+    }
+    @if (TempData["OrderError"] is string orderError)
+    {
+        <div class="alert alert-warning" role="alert">@orderError</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Klient</dt>
+                <dd class="col-sm-9">@Model.Order.User?.FirstName @Model.Order.User?.LastName (@Model.Order.User?.Email)</dd>
+                <dt class="col-sm-3">Data</dt>
+                <dd class="col-sm-9">@Model.Order.OrderDate.ToLocalTime().ToString("g")</dd>
+                <dt class="col-sm-3">Status</dt>
+                <dd class="col-sm-9">@Model.Order.Status</dd>
+                <dt class="col-sm-3">Łącznie</dt>
+                <dd class="col-sm-9">@Model.Order.TotalAmount.ToString("F2") zł</dd>
+            </dl>
+        </div>
+    </div>
+
+    <h2 class="h4">Pozycje zamówienia</h2>
+    <div class="table-responsive mb-4">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Produkt</th><th>Cena jednostkowa</th><th>Ilość</th><th>Wartość</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Order.Items)
+                {
+                    <tr>
+                        <td>@item.Product?.Name</td>
+                        <td>@item.UnitPrice.ToString("F2") zł</td>
+                        <td>@item.Quantity</td>
+                        <td>@((item.UnitPrice * item.Quantity).ToString("F2")) zł</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="h4">Zmiana statusu</h2>
+    @if (MyApp.Models.OrderStatuses.All.Any(status => MyApp.Models.OrderStatuses.CanTransition(Model.Order.Status, status)))
+    {
+        <form asp-action="UpdateOrderStatus" method="post" class="d-flex flex-wrap gap-2 mb-4">
+            <input type="hidden" name="id" value="@Model.Order.Id" />
+            <select name="status" class="form-select" style="max-width: 260px" aria-label="Nowy status zamówienia">
+                @foreach (var status in MyApp.Models.OrderStatuses.All.Where(status => MyApp.Models.OrderStatuses.CanTransition(Model.Order.Status, status)))
+                {
+                    <option value="@status">@status</option>
+                }
+            </select>
+            <button type="submit" class="btn btn-primary">Zapisz status</button>
+        </form>
+    }
+    else
+    {
+        <p class="text-muted mb-4">To zamówienie ma status końcowy i nie można go już zmienić.</p>
+    }
+
+    <h2 class="h4">Ruchy magazynowe dla zamówienia</h2>
+    @if (Model.InventoryTransactions.Count == 0)
+    {
+        <p class="text-muted">Brak zarejestrowanych ruchów magazynowych.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm">
+                <thead>
+                    <tr><th>Data</th><th>Produkt</th><th>Typ</th><th>Zmiana</th><th>Stan po</th><th>Opis</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var movement in Model.InventoryTransactions)
+                    {
+                        <tr>
+                            <td>@movement.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td>@movement.Product?.Name</td>
+                            <td>@movement.Type</td>
+                            <td>@movement.QuantityChange</td>
+                            <td>@movement.StockAfter</td>
+                            <td>@movement.Note</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

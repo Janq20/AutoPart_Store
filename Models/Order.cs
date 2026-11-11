@@ -13,7 +13,7 @@ namespace MyApp.Models
         public DateTime OrderDate { get; set; } = DateTime.UtcNow;
 
         [Required, MaxLength(50)]
-        public string Status { get; set; } = "Nowe";
+        public string Status { get; set; } = OrderStatuses.New;
 
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }

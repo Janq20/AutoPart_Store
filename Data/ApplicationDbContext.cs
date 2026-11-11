@@ -16,6 +16,7 @@ namespace MyApp.Data
         public DbSet<Product> Products { get; set; }
         public DbSet<Order> Orders { get; set; }
         public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -68,6 +69,27 @@ namespace MyApp.Data
                 .WithMany(product => product.OrderItems)
                 .HasForeignKey(item => item.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransaction>()
+                .HasOne(transaction => transaction.Product)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransaction>()
+                .HasOne(transaction => transaction.Order)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<InventoryTransaction>()
+                .HasOne(transaction => transaction.User)
+                .WithMany()
+                .HasForeignKey(transaction => transaction.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<InventoryTransaction>()
+                .HasIndex(transaction => transaction.CreatedAt);
         }
     }
 }

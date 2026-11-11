@@ -89,6 +89,146 @@ namespace MyApp.Controllers
 
         [HttpGet]
         [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> Orders()
+        {
+            var model = new ManageOrdersViewModel
+            {
+                Orders = await _dbContext.Orders
+                    .AsNoTracking()
+                    .Include(order => order.User)
+                    .Include(order => order.Items)
+                    .OrderByDescending(order => order.OrderDate)
+                    .Select(order => new OrderListItemViewModel
+                    {
+                        Id = order.Id,
+                        OrderDate = order.OrderDate,
+                        CustomerName = order.User!.FirstName + " " + order.User.LastName,
+                        CustomerEmail = order.User!.Email,
+                        Status = order.Status,
+                        TotalAmount = order.TotalAmount,
+                        ItemCount = order.Items.Sum(item => item.Quantity)
+                    })
+                    .ToListAsync()
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var order = await _dbContext.Orders
+                .AsNoTracking()
+                .Include(item => item.User)
+                .Include(item => item.Items)
+                    .ThenInclude(item => item.Product)
+                .SingleOrDefaultAsync(item => item.Id == id);
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            var inventoryTransactions = await _dbContext.InventoryTransactions
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Include(item => item.User)
+                .Where(item => item.OrderId == id)
+                .OrderBy(item => item.CreatedAt)
+                .ToListAsync();
+
+            return View(new OrderDetailsViewModel
+            {
+                Order = order,
+                InventoryTransactions = inventoryTransactions
+            });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> UpdateOrderStatus(int id, string status)
+        {
+            if (!OrderStatuses.All.Contains(status, StringComparer.Ordinal))
+            {
+                return BadRequest("Nieprawidłowy status zamówienia.");
+            }
+
+            var order = await _dbContext.Orders
+                .Include(item => item.Items)
+                .SingleOrDefaultAsync(item => item.Id == id);
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            if (!OrderStatuses.CanTransition(order.Status, status))
+            {
+                TempData["OrderError"] = $"Nie można zmienić statusu „{order.Status}” na „{status}”.";
+                return RedirectToAction(nameof(OrderDetails), new { id });
+            }
+
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Forbid();
+            }
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            if (status == OrderStatuses.Cancelled)
+            {
+                foreach (var item in order.Items)
+                {
+                    var product = await _dbContext.Products
+                        .AsNoTracking()
+                        .SingleAsync(candidate => candidate.Id == item.ProductId);
+                    var stockAfter = checked(product.StockQuantity + item.Quantity);
+                    await _dbContext.Products
+                        .Where(candidate => candidate.Id == item.ProductId)
+                        .ExecuteUpdateAsync(updates => updates
+                            .SetProperty(candidate => candidate.StockQuantity, candidate => candidate.StockQuantity + item.Quantity));
+
+                    _dbContext.InventoryTransactions.Add(new InventoryTransaction
+                    {
+                        ProductId = item.ProductId,
+                        OrderId = order.Id,
+                        UserId = userId,
+                        Type = InventoryTransactionTypes.OrderCancellation,
+                        QuantityChange = item.Quantity,
+                        StockBefore = product.StockQuantity,
+                        StockAfter = stockAfter,
+                        Note = $"Zwrot towaru z anulowanego zamówienia #{order.Id}."
+                    });
+                }
+            }
+
+            order.Status = status;
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            TempData["SuccessMessage"] = status == OrderStatuses.Cancelled
+                ? "Zamówienie anulowano i przywrócono stan magazynowy."
+                : "Status zamówienia został zaktualizowany.";
+            return RedirectToAction(nameof(OrderDetails), new { id });
+        }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> InventoryTransactions()
+        {
+            var transactions = await _dbContext.InventoryTransactions
+                .AsNoTracking()
+                .Include(item => item.Product)
+                .Include(item => item.Order)
+                .Include(item => item.User)
+                .OrderByDescending(item => item.CreatedAt)
+                .Take(500)
+                .ToListAsync();
+
+            return View(transactions);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
         public async Task<IActionResult> CreateProduct()
         {
             var model = new ProductFormViewModel();
@@ -131,7 +271,13 @@ namespace MyApp.Controllers
                 return View("ProductForm", model);
             }
 
-            _dbContext.Products.Add(new Product
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Forbid();
+            }
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var product = new Product
             {
                 Name = model.Name.Trim(),
                 Description = model.Description?.Trim(),
@@ -139,9 +285,26 @@ namespace MyApp.Controllers
                 StockQuantity = model.StockQuantity,
                 CategoryId = categoryId,
                 IsActive = model.IsActive
-            });
+            };
+            _dbContext.Products.Add(product);
             await _dbContext.SaveChangesAsync();
 
+            if (product.StockQuantity > 0)
+            {
+                _dbContext.InventoryTransactions.Add(new InventoryTransaction
+                {
+                    ProductId = product.Id,
+                    UserId = userId,
+                    Type = InventoryTransactionTypes.InitialStock,
+                    QuantityChange = product.StockQuantity,
+                    StockBefore = 0,
+                    StockAfter = product.StockQuantity,
+                    Note = "Przyjęcie początkowego stanu magazynowego."
+                });
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = "Produkt został dodany.";
             return RedirectToAction(nameof(Products));
         }
@@ -221,6 +384,12 @@ namespace MyApp.Controllers
                 return View("ProductForm", model);
             }
 
+            if (!TryGetCurrentUserId(out var userId))
+            {
+                return Forbid();
+            }
+
+            var stockBefore = product.StockQuantity;
             product.Name = model.Name.Trim();
             product.Description = model.Description?.Trim();
             product.Price = model.Price;
@@ -228,7 +397,24 @@ namespace MyApp.Controllers
             product.CategoryId = categoryId;
             product.IsActive = model.IsActive;
 
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
             await _dbContext.SaveChangesAsync();
+            if (stockBefore != product.StockQuantity)
+            {
+                _dbContext.InventoryTransactions.Add(new InventoryTransaction
+                {
+                    ProductId = product.Id,
+                    UserId = userId,
+                    Type = InventoryTransactionTypes.Adjustment,
+                    QuantityChange = product.StockQuantity - stockBefore,
+                    StockBefore = stockBefore,
+                    StockAfter = product.StockQuantity,
+                    Note = "Ręczna korekta stanu magazynowego."
+                });
+                await _dbContext.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
             TempData["SuccessMessage"] = "Produkt został zaktualizowany.";
             return RedirectToAction(nameof(Products));
         }
@@ -371,5 +557,8 @@ namespace MyApp.Controllers
                 .Select(category => new SelectListItem(category.Name, category.Id.ToString()))
                 .ToListAsync();
         }
+
+        private bool TryGetCurrentUserId(out int userId) =>
+            int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out userId);
     }
 }

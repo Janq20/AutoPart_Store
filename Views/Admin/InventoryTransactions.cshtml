@@ -1,0 +1,45 @@
+@model IReadOnlyList<MyApp.Models.InventoryTransaction>
+@{
+    ViewData["Title"] = "Ruchy magazynowe";
+}
+
+<div class="container py-4">
+    <h1 class="h2 mb-2">Ruchy magazynowe</h1>
+    <p class="text-muted">Ostatnie 500 zapisanych zmian stanów magazynowych.</p>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-info">Brak ruchów magazynowych.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr><th>Data</th><th>Produkt</th><th>Typ</th><th>Zmiana</th><th>Stan przed</th><th>Stan po</th><th>Zamówienie</th><th>Użytkownik</th><th>Opis</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var movement in Model)
+                    {
+                        <tr>
+                            <td>@movement.CreatedAt.ToLocalTime().ToString("g")</td>
+                            <td>@movement.Product?.Name</td>
+                            <td>@movement.Type</td>
+                            <td>@movement.QuantityChange</td>
+                            <td>@movement.StockBefore</td>
+                            <td>@movement.StockAfter</td>
+                            <td>
+                                @if (movement.OrderId.HasValue)
+                                {
+                                    <a asp-action="OrderDetails" asp-route-id="@movement.OrderId">#@movement.OrderId</a>
+                                }
+                            </td>
+                            <td>@movement.User?.Email</td>
+                            <td>@movement.Note</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
