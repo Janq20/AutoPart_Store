@@ -1,4 +1,6 @@
 using System.Text.Json;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyApp.Data;
@@ -6,6 +8,7 @@ using MyApp.Models;
 
 namespace MyApp.Controllers
 {
+    [Authorize]
     public class CartController : Controller
     {
         private const string CartSessionKey = "ShoppingCart";
@@ -118,6 +121,84 @@ namespace MyApp.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout()
+        {
+            var cart = ReadCart();
+            if (cart.Count == 0)
+            {
+                TempData["CartError"] = "Koszyk jest pusty.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Forbid();
+            }
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            var products = await _dbContext.Products
+                .AsNoTracking()
+                .Where(product => cart.Keys.Contains(product.Id) && product.IsActive)
+                .ToListAsync();
+
+            if (products.Count != cart.Count)
+            {
+                TempData["CartError"] = "Niektóre produkty nie są już dostępne. Koszyk został zaktualizowany.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var unavailableProduct = products.FirstOrDefault(product =>
+                !cart.TryGetValue(product.Id, out var quantity) ||
+                quantity < 1 ||
+                quantity > product.StockQuantity);
+            if (unavailableProduct is not null)
+            {
+                TempData["CartError"] = $"Dostępna ilość produktu „{unavailableProduct.Name}” wynosi {unavailableProduct.StockQuantity}.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            foreach (var product in products)
+            {
+                var quantity = cart[product.Id];
+                var updatedRows = await _dbContext.Products
+                    .Where(item => item.Id == product.Id &&
+                                   item.IsActive &&
+                                   item.StockQuantity >= quantity)
+                    .ExecuteUpdateAsync(updates => updates
+                        .SetProperty(item => item.StockQuantity, item => item.StockQuantity - quantity));
+
+                if (updatedRows != 1)
+                {
+                    await transaction.RollbackAsync();
+                    TempData["CartError"] = "Stan magazynowy właśnie się zmienił. Sprawdź koszyk i spróbuj ponownie.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
+
+            var order = new Order
+            {
+                UserId = userId,
+                Status = "Nowe",
+                TotalAmount = products.Sum(product => product.Price * cart[product.Id]),
+                Items = products.Select(product => new OrderItem
+                {
+                    ProductId = product.Id,
+                    Quantity = cart[product.Id],
+                    UnitPrice = product.Price
+                }).ToList()
+            };
+
+            _dbContext.Orders.Add(order);
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            HttpContext.Session.Remove(CartSessionKey);
+            TempData["CartMessage"] = "Zakup został zarejestrowany. Koszyk jest już pusty.";
+            return RedirectToAction(nameof(Index));
+        }
+
         private Dictionary<int, int> ReadCart()
         {
             var serializedCart = HttpContext.Session.GetString(CartSessionKey);
@@ -179,7 +260,7 @@ namespace MyApp.Controllers
             }
 
             SaveCart(cart);
-            if (quantityAdjusted)
+            if (quantityAdjusted && TempData["CartError"] is not string)
             {
                 TempData["CartError"] = "Koszyk został zaktualizowany, ponieważ zmieniła się dostępność produktów.";
             }

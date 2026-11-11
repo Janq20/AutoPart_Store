@@ -107,7 +107,7 @@
                                 }
                                 else
                                 {
-                                    <span class="badge text-bg-secondary">Brak w magazynie</span>
+                                    <span class="badge text-bg-secondary">Niedostępny</span>
                                 }
                             </div>
                             <h2 class="h5 card-title">@product.Name</h2>
@@ -125,6 +125,10 @@
                             else if (User.Identity?.IsAuthenticated != true)
                             {
                                 <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary">Zaloguj się, aby kupić</a>
+                            }
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary" disabled>Niedostępny</button>
                             }
                         </div>
                     </article>
