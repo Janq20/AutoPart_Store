@@ -112,6 +112,7 @@ else if (User.IsInRole(UserRoles.Administrator))
         <a asp-controller="Admin" asp-action="Products" class="dashboard-card"><span class="dashboard-icon">▦</span><strong>Asortyment</strong><small>Produkty, ceny i dostępność</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Admin" asp-action="Categories" class="dashboard-card"><span class="dashboard-icon">⌗</span><strong>Kategorie</strong><small>Porządkuj katalog części</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Admin" asp-action="Users" class="dashboard-card"><span class="dashboard-icon">♙</span><strong>Użytkownicy</strong><small>Zarządzaj rolami i dostępem</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Orders" class="dashboard-card"><span class="dashboard-icon">▤</span><strong>Zamówienia</strong><small>Sprawdzaj zakupy i dane klientów</small><span class="dashboard-arrow">→</span></a>
     </section>
 }
 else if (User.IsInRole(UserRoles.Employee))
@@ -125,6 +126,7 @@ else if (User.IsInRole(UserRoles.Employee))
         <a asp-controller="Admin" asp-action="Products" class="dashboard-card"><span class="dashboard-icon">▦</span><strong>Asortyment</strong><small>Dodawaj i aktualizuj produkty</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Admin" asp-action="Categories" class="dashboard-card"><span class="dashboard-icon">⌗</span><strong>Kategorie</strong><small>Znajdź właściwe miejsce dla części</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Catalog" asp-action="Index" class="dashboard-card"><span class="dashboard-icon">⌕</span><strong>Podgląd katalogu</strong><small>Sprawdź ofertę jak klient</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Orders" class="dashboard-card"><span class="dashboard-icon">▤</span><strong>Zamówienia</strong><small>Obsługuj zakupy klientów</small><span class="dashboard-arrow">→</span></a>
     </section>
 }
 else

@@ -267,6 +267,72 @@ namespace MyApp.Controllers
 
         [HttpGet]
         [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> Orders()
+        {
+            var orders = await _dbContext.Orders
+                .AsNoTracking()
+                .Include(order => order.User)
+                .Include(order => order.Items)
+                .OrderByDescending(order => order.OrderDate)
+                .Select(order => new OrderListItemViewModel
+                {
+                    Id = order.Id,
+                    CustomerName = order.User == null
+                        ? "Nieznany klient"
+                        : order.User.FirstName + " " + order.User.LastName,
+                    CustomerEmail = order.User == null ? string.Empty : order.User.Email,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    ItemCount = order.Items.Sum(item => item.Quantity),
+                    TotalAmount = order.TotalAmount
+                })
+                .ToListAsync();
+
+            return View(orders);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> OrderDetails(int id)
+        {
+            var order = await _dbContext.Orders
+                .AsNoTracking()
+                .Include(item => item.User)
+                .Include(item => item.Items)
+                .ThenInclude(item => item.Product)
+                .SingleOrDefaultAsync(item => item.Id == id);
+
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            var model = new OrderDetailsViewModel
+            {
+                Id = order.Id,
+                CustomerName = order.User is null
+                    ? "Nieznany klient"
+                    : $"{order.User.FirstName} {order.User.LastName}",
+                CustomerEmail = order.User?.Email ?? string.Empty,
+                OrderDate = order.OrderDate,
+                Status = order.Status,
+                TotalAmount = order.TotalAmount,
+                Items = order.Items
+                    .OrderBy(item => item.Product?.Name)
+                    .Select(item => new OrderDetailsItemViewModel
+                    {
+                        ProductName = item.Product?.Name ?? "Produkt usunięty",
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    })
+                    .ToList()
+            };
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
         public async Task<IActionResult> CreateCategory()
         {
             var model = new CategoryFormViewModel();

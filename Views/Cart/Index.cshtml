@@ -13,6 +13,10 @@
     {
         <div class="alert alert-warning" role="alert">@cartError</div>
     }
+    @if (TempData["CartMessage"] is string cartMessage)
+    {
+        <div class="alert alert-success" role="status">@cartMessage</div>
+    }
 
     @if (Model.Items.Count == 0)
     {
@@ -64,8 +68,16 @@
                 </tfoot>
             </table>
         </div>
-        <form asp-action="Clear" method="post">
-            <button type="submit" class="btn btn-outline-danger">Opróżnij koszyk</button>
-        </form>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <form asp-action="Clear" method="post">
+                <button type="submit" class="btn btn-outline-danger">Opróżnij koszyk</button>
+            </form>
+            <div class="text-end">
+                <p class="small text-muted mb-2">Zakup zostanie zapisany, a stan magazynowy zaktualizowany. Płatności online nie są skonfigurowane.</p>
+                <form asp-action="Checkout" method="post">
+                    <button type="submit" class="btn btn-success">Potwierdź zakup</button>
+                </form>
+            </div>
+        </div>
     }
 </div>

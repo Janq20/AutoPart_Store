@@ -595,6 +595,99 @@ body {
   border-bottom: 1px solid var(--line);
 }
 
+.order-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.order-summary-card,
+.order-info-card,
+.order-items-card,
+.empty-state {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.order-summary-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-summary-card span,
+.order-info-label {
+  color: var(--ink-soft);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+
+.order-summary-card strong {
+  color: var(--role-color, var(--orange));
+  font-size: 1.65rem;
+}
+
+.order-table td small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+}
+
+.order-status {
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--role-soft, #fff0e9);
+  color: var(--role-dark, var(--orange-dark));
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.order-info-card {
+  height: 100%;
+}
+
+.order-info-card h2 {
+  margin: 10px 0 5px;
+  font-size: 1.25rem;
+}
+
+.order-info-card a {
+  color: var(--role-dark, var(--orange-dark));
+  text-decoration: none;
+}
+
+.order-info-card hr {
+  margin: 25px 0;
+  border-color: var(--line);
+}
+
+.order-items-card h2 {
+  margin: 0 0 18px;
+  font-size: 1.25rem;
+}
+
+.empty-state {
+  padding: 55px 25px;
+  text-align: center;
+}
+
+.empty-state .dashboard-icon {
+  margin: 0 auto 15px;
+}
+
+.empty-state h2 {
+  font-size: 1.3rem;
+}
+
+.empty-state p {
+  margin-bottom: 0;
+  color: var(--ink-soft);
+}
+
 .about-section {
   margin: 42px 0 32px;
   padding: 46px clamp(24px, 6vw, 78px);
@@ -797,6 +890,10 @@ body {
   }
 
   .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-summary-grid {
     grid-template-columns: 1fr;
   }
 }
