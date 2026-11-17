@@ -1,0 +1,14 @@
+@model MyApp.Models.Order
+@{
+    ViewData["Title"] = "Zamówienie przyjęte";
+}
+<div class="container py-5">
+    <div class="alert alert-success">
+        <h1 class="h3">Zamówienie #@Model.Id zostało przyjęte</h1>
+        <p class="mb-1">Płatność zakończyła się powodzeniem.</p>
+        <p class="mb-1"><strong>Status płatności:</strong> @Model.PaymentStatus</p>
+        <p class="mb-1"><strong>Zapłacono:</strong> @Model.TotalAmount.ToString("F2") zł</p>
+        <p class="mb-0">Faktura będzie dostępna w panelu klienta.</p>
+    </div>
+    <a asp-controller="Account" asp-action="Orders" class="btn btn-primary">Moje zamówienia</a>
+</div>

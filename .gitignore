@@ -6,6 +6,9 @@
 # dotenv files
 .env
 
+# Local application settings can contain SMTP credentials
+/appsettings.json
+
 # User-specific files
 *.rsuser
 *.suo

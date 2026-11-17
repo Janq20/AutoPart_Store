@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MyApp.Data;
 using MyApp.Models;
+using MyApp.Services;
 using System.Security.Claims;
 
 namespace MyApp.Controllers
@@ -15,11 +16,16 @@ namespace MyApp.Controllers
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<AdminController> _logger;
+        private readonly IOrderNotificationService _notificationService;
 
-        public AdminController(ApplicationDbContext dbContext, ILogger<AdminController> logger)
+        public AdminController(
+            ApplicationDbContext dbContext,
+            ILogger<AdminController> logger,
+            IOrderNotificationService notificationService)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         [HttpGet]
@@ -283,6 +289,7 @@ namespace MyApp.Controllers
                     CustomerEmail = order.User == null ? string.Empty : order.User.Email,
                     OrderDate = order.OrderDate,
                     Status = order.Status,
+                    PaymentStatus = order.PaymentStatus,
                     ItemCount = order.Items.Sum(item => item.Quantity),
                     TotalAmount = order.TotalAmount
                 })
@@ -316,6 +323,8 @@ namespace MyApp.Controllers
                 CustomerEmail = order.User?.Email ?? string.Empty,
                 OrderDate = order.OrderDate,
                 Status = order.Status,
+                PaymentStatus = order.PaymentStatus,
+                InvoiceNumber = order.InvoiceNumber,
                 TotalAmount = order.TotalAmount,
                 Items = order.Items
                     .OrderBy(item => item.Product?.Name)
@@ -329,6 +338,74 @@ namespace MyApp.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
+        public async Task<IActionResult> ChangeOrderStatus(int id, string status)
+        {
+            if (!OrderStatuses.All.Contains(status, StringComparer.Ordinal))
+            {
+                return BadRequest("Nieprawidłowy status zamówienia.");
+            }
+
+            var order = await _dbContext.Orders
+                .Include(item => item.Items)
+                .Include(item => item.User)
+                .SingleOrDefaultAsync(item => item.Id == id);
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            if (order.Status == status)
+            {
+                return RedirectToAction(nameof(OrderDetails), new { id });
+            }
+
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            if (status == "Anulowane" && order.Status != "Anulowane")
+            {
+                foreach (var item in order.Items)
+                {
+                    await _dbContext.Products
+                        .Where(product => product.Id == item.ProductId)
+                        .ExecuteUpdateAsync(updates => updates
+                            .SetProperty(product => product.StockQuantity, product => product.StockQuantity + item.Quantity));
+                }
+            }
+            else if (order.Status == "Anulowane" && status != "Anulowane")
+            {
+                foreach (var item in order.Items)
+                {
+                    var updated = await _dbContext.Products
+                        .Where(product => product.Id == item.ProductId && product.StockQuantity >= item.Quantity)
+                        .ExecuteUpdateAsync(updates => updates
+                            .SetProperty(product => product.StockQuantity, product => product.StockQuantity - item.Quantity));
+                    if (updated != 1)
+                    {
+                        await transaction.RollbackAsync();
+                        TempData["OrderError"] = "Nie można przywrócić zamówienia, ponieważ brakuje produktu na magazynie.";
+                        return RedirectToAction(nameof(OrderDetails), new { id });
+                    }
+                }
+            }
+
+            order.Status = status;
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
+            try
+            {
+                await _notificationService.SendStatusChangedAsync(order);
+            }
+            catch (System.Net.Mail.SmtpException exception)
+            {
+                _logger.LogWarning(exception, "Could not send order notification for order {OrderId}.", order.Id);
+            }
+
+            TempData["SuccessMessage"] = "Status zamówienia został zmieniony.";
+            return RedirectToAction(nameof(OrderDetails), new { id });
         }
 
         [HttpGet]

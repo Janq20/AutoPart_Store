@@ -4,8 +4,11 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
 using MyApp.Models;
+using MyApp.Services;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = LicenseType.Community;
 builder.Services.AddDbContext<MyApp.Data.ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -18,6 +21,10 @@ builder.Services.AddSession(options =>
 });
 // Rejestracja kontrolerów i widoków MVC
 builder.Services.AddControllersWithViews();
+builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
+builder.Services.AddScoped<IPaymentService, VirtualPaymentService>();
+builder.Services.AddScoped<IOrderNotificationService, SmtpOrderNotificationService>();
+builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 // Konfiguracja uwierzytelniania opartego o Cookie
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -58,6 +65,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<MyApp.Data.ApplicationDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 // Konfiguracja potoku HTTP
 if (!app.Environment.IsDevelopment())

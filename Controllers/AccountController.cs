@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyApp.Data;
 using MyApp.Models;
+using MyApp.Services;
 
 namespace MyApp.Controllers
 {
@@ -14,15 +16,18 @@ namespace MyApp.Controllers
         private readonly ApplicationDbContext _dbContext;
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly ILogger<AccountController> _logger;
+        private readonly IInvoicePdfService _invoicePdfService;
 
         public AccountController(
             ApplicationDbContext dbContext,
             IPasswordHasher<User> passwordHasher,
-            ILogger<AccountController> logger)
+            ILogger<AccountController> logger,
+            IInvoicePdfService invoicePdfService)
         {
             _dbContext = dbContext;
             _passwordHasher = passwordHasher;
             _logger = logger;
+            _invoicePdfService = invoicePdfService;
         }
 
         [HttpGet]
@@ -137,6 +142,55 @@ namespace MyApp.Controllers
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction(nameof(Login));
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Orders()
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Forbid();
+            }
+
+            var orders = await _dbContext.Orders
+                .AsNoTracking()
+                .Where(order => order.UserId == userId)
+                .Include(order => order.Items)
+                .OrderByDescending(order => order.OrderDate)
+                .Select(order => new OrderListItemViewModel
+                {
+                    Id = order.Id,
+                    OrderDate = order.OrderDate,
+                    Status = order.Status,
+                    PaymentStatus = order.PaymentStatus,
+                    ItemCount = order.Items.Sum(item => item.Quantity),
+                    TotalAmount = order.TotalAmount
+                })
+                .ToListAsync();
+            return View(orders);
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Invoice(int id)
+        {
+            if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            {
+                return Forbid();
+            }
+
+            var order = await _dbContext.Orders
+                .Include(item => item.User)
+                .Include(item => item.Items)
+                .ThenInclude(item => item.Product)
+                .SingleOrDefaultAsync(item => item.Id == id && item.UserId == userId);
+            if (order is null)
+            {
+                return NotFound();
+            }
+
+            return File(_invoicePdfService.Generate(order), "application/pdf", $"faktura-{order.Id}.pdf");
         }
     }
 }

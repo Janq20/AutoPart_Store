@@ -15,6 +15,15 @@ namespace MyApp.Models
         [Required, MaxLength(50)]
         public string Status { get; set; } = "Nowe";
 
+        [Required, MaxLength(30)]
+        public string PaymentStatus { get; set; } = "Oczekująca";
+
+        [MaxLength(100)]
+        public string? PaymentTransactionId { get; set; }
+
+        [MaxLength(50)]
+        public string? InvoiceNumber { get; set; }
+
         [Column(TypeName = "decimal(18,2)")]
         public decimal TotalAmount { get; set; }
 
