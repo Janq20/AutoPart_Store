@@ -1,11 +1,24 @@
 using System.Globalization;
+using Microsoft.AspNetCore.Hosting;
 
 namespace MyApp.Services
 {
     public class VirtualPaymentService : IPaymentService
     {
+        private readonly IWebHostEnvironment _environment;
+
+        public VirtualPaymentService(IWebHostEnvironment environment)
+        {
+            _environment = environment;
+        }
+
         public PaymentResult Process(string cardNumber, string expiry, string cvv, decimal amount)
         {
+            if (!_environment.IsDevelopment())
+            {
+                return new PaymentResult(false, null, "Symulator płatności jest niedostępny w środowisku produkcyjnym.");
+            }
+
             cardNumber = cardNumber.Replace(" ", string.Empty);
             if (amount <= 0 ||
                 cardNumber.Length != 16 ||

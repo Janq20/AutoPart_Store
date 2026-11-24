@@ -22,6 +22,10 @@ namespace MyApp.Models
         [Required]
         public string Role { get; set; } = UserRoles.Client;
 
+        public int FailedLoginAttempts { get; set; }
+
+        public DateTime? LockoutEndUtc { get; set; }
+
         public List<Address> Addresses { get; set; } = new();
     }
 }

@@ -1,0 +1,75 @@
+@model MyApp.Models.SalesReportViewModel
+@{
+    ViewData["Title"] = "Raporty sprzedaży";
+    var culture = System.Globalization.CultureInfo.GetCultureInfo("pl-PL");
+    var invariantCulture = System.Globalization.CultureInfo.InvariantCulture;
+}
+
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4 admin-page-heading">
+        <div>
+            <span class="eyebrow">ANALITYKA SKLEPU</span>
+            <h1 class="h2 mb-0 mt-2">Raporty sprzedaży</h1>
+        </div>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Panel główny</a>
+    </div>
+
+    <form asp-action="Reports" method="get" class="sales-report-filter mb-4">
+        <div>
+            <label for="startDate" class="form-label">Od</label>
+            <input id="startDate" name="startDate" type="date" value="@Model.StartDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <div>
+            <label for="endDate" class="form-label">Do</label>
+            <input id="endDate" name="endDate" type="date" value="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" />
+        </div>
+        <button type="submit" class="btn btn-primary">Pokaż raport</button>
+    </form>
+
+    <div class="sales-report-summary mb-4">
+        <article class="sales-kpi">
+            <span>Przychód z opłaconych zamówień</span>
+            <strong>@Model.TotalRevenue.ToString("C", culture)</strong>
+        </article>
+        <article class="sales-kpi">
+            <span>Opłacone zamówienia</span>
+            <strong>@Model.OrderCount</strong>
+        </article>
+        <article class="sales-kpi">
+            <span>Średnia wartość zamówienia</span>
+            <strong>@Model.AverageOrderValue.ToString("C", culture)</strong>
+        </article>
+    </div>
+
+    <section class="sales-chart-card" aria-labelledby="daily-sales-title">
+        <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+                <h2 id="daily-sales-title" class="h5 mb-1">Sprzedaż dzienna</h2>
+                <p class="text-muted mb-0">Kwoty obejmują opłacone, nieanulowane zamówienia.</p>
+            </div>
+            <span class="text-muted small">@Model.StartDate.ToString("dd.MM.yyyy") – @Model.EndDate.ToString("dd.MM.yyyy")</span>
+        </div>
+
+        @if (Model.OrderCount == 0)
+        {
+            <div class="alert alert-info mb-0">Brak opłaconej sprzedaży w wybranym okresie.</div>
+        }
+        else
+        {
+            <div class="sales-chart-scroll">
+                <div class="sales-chart" role="img" aria-label="Wykres dziennej sprzedaży">
+                    @foreach (var day in Model.DailySales)
+                    {
+                        <div class="sales-chart-day" title="@day.Date.ToString("dd.MM.yyyy"): @day.Revenue.ToString("C", culture)">
+                            <span class="sales-chart-value">@day.Revenue.ToString("0.#", culture)</span>
+                            <div class="sales-chart-track">
+                                <span class="sales-chart-bar" style="height: @day.BarHeightPercent.ToString("0.##", invariantCulture)%"></span>
+                            </div>
+                            <span class="sales-chart-label">@day.Date.ToString("dd.MM")</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </section>
+</div>

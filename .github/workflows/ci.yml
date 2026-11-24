@@ -1,0 +1,19 @@
+name: Build and UAT
+
+on:
+  push:
+    branches: [glowny, glowna]
+  pull_request:
+    branches: [glowny, glowna]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet restore Tests/AutoPart.Store.UatTests/AutoPart.Store.UatTests.csproj
+      - run: dotnet test Tests/AutoPart.Store.UatTests/AutoPart.Store.UatTests.csproj --configuration Release --no-restore
+      - run: dotnet publish MyApp.csproj --configuration Release --no-restore --output publish

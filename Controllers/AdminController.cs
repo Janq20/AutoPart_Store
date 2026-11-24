@@ -299,6 +299,72 @@ namespace MyApp.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = UserRoles.Administrator)]
+        public async Task<IActionResult> Reports(DateOnly? startDate, DateOnly? endDate)
+        {
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var start = startDate ?? today.AddDays(-29);
+            var end = endDate ?? today;
+            if (start > end || end.DayNumber - start.DayNumber > 365)
+            {
+                return BadRequest("Wybierz prawidłowy zakres maksymalnie 366 dni.");
+            }
+
+            var startUtc = start.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var endUtc = end.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+            var dailyTotals = await _dbContext.Orders
+                .AsNoTracking()
+                .Where(order => order.PaymentStatus == "Opłacona" &&
+                                order.Status != "Anulowane" &&
+                                order.OrderDate >= startUtc &&
+                                order.OrderDate < endUtc)
+                .GroupBy(order => order.OrderDate.Date)
+                .Select(group => new
+                {
+                    Date = group.Key,
+                    Revenue = group.Sum(order => order.TotalAmount),
+                    OrderCount = group.Count()
+                })
+                .ToListAsync();
+
+            var totalsByDate = dailyTotals.ToDictionary(
+                item => DateOnly.FromDateTime(item.Date),
+                item => item.Revenue);
+            var dailySales = Enumerable.Range(0, end.DayNumber - start.DayNumber + 1)
+                .Select(offset =>
+                {
+                    var date = start.AddDays(offset);
+                    return new SalesDayViewModel
+                    {
+                        Date = date,
+                        Revenue = totalsByDate.GetValueOrDefault(date)
+                    };
+                })
+                .ToList();
+            var revenue = dailyTotals.Sum(item => item.Revenue);
+            var orderCount = dailyTotals.Sum(item => item.OrderCount);
+            var maximumDailyRevenue = dailySales.Max(item => item.Revenue);
+            foreach (var day in dailySales)
+            {
+                day.BarHeightPercent = maximumDailyRevenue == 0
+                    || day.Revenue == 0
+                    ? 0
+                    : Math.Max(5, day.Revenue / maximumDailyRevenue * 100);
+            }
+
+            return View(new SalesReportViewModel
+            {
+                StartDate = start,
+                EndDate = end,
+                OrderCount = orderCount,
+                TotalRevenue = revenue,
+                AverageOrderValue = orderCount == 0 ? 0 : revenue / orderCount,
+                MaximumDailyRevenue = maximumDailyRevenue,
+                DailySales = dailySales
+            });
+        }
+
+        [HttpGet]
         [Authorize(Roles = UserRoles.Administrator + "," + UserRoles.Employee)]
         public async Task<IActionResult> OrderDetails(int id)
         {

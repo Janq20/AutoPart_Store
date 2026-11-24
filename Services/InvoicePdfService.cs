@@ -121,7 +121,6 @@ namespace MyApp.Services
                                 column.Item().Text("Sposób i termin zapłaty").Bold();
                                 column.Item().Text("Płatność online, zapłacono");
                                 column.Item().Text($"Status płatności: {order.PaymentStatus}");
-                                column.Item().Text($"Transakcja: {order.PaymentTransactionId ?? "-"}");
                             });
                             row.ConstantItem(12);
                             row.ConstantItem(205).Border(1).Padding(8).Column(column =>

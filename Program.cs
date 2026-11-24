@@ -6,6 +6,7 @@ using System.Security.Claims;
 using MyApp.Models;
 using MyApp.Services;
 using QuestPDF.Infrastructure;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 QuestPDF.Settings.License = LicenseType.Community;
@@ -21,8 +22,28 @@ builder.Services.AddSession(options =>
 });
 // Rejestracja kontrolerów i widoków MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("Login", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(5),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
+});
 builder.Services.Configure<SmtpOptions>(builder.Configuration.GetSection("Smtp"));
-builder.Services.AddScoped<IPaymentService, VirtualPaymentService>();
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddScoped<IPaymentService, VirtualPaymentService>();
+}
+else
+{
+    builder.Services.AddScoped<IPaymentService, UnavailablePaymentService>();
+}
 builder.Services.AddScoped<IOrderNotificationService, SmtpOrderNotificationService>();
 builder.Services.AddScoped<IInvoicePdfService, InvoicePdfService>();
 // Konfiguracja uwierzytelniania opartego o Cookie
@@ -70,6 +91,12 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<MyApp.Data.ApplicationDbContext>();
     await dbContext.Database.MigrateAsync();
+    if (app.Environment.IsDevelopment())
+    {
+        await MyApp.Data.DemoDataSeeder.SeedAsync(
+            dbContext,
+            scope.ServiceProvider.GetRequiredService<IPasswordHasher<User>>());
+    }
 }
 
 // Konfiguracja potoku HTTP
@@ -83,6 +110,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 app.UseSession();
 
 // Middleware uwierzytelniania i autoryzacji 
@@ -94,3 +122,5 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
+
+public partial class Program;

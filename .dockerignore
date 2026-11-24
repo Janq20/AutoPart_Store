@@ -1,0 +1,11 @@
+.git
+.vs
+.vscode
+**/bin
+**/obj
+Tests
+appsettings.json
+appsettings.Development.json
+appsettings.example.json
+*.db
+Hasla.txt

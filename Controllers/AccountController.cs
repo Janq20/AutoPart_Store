@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -83,6 +84,7 @@ namespace MyApp.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [EnableRateLimiting("Login")]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid)
@@ -92,7 +94,8 @@ namespace MyApp.Controllers
 
             var email = model.Email.Trim().ToLowerInvariant();
             var user = await _dbContext.Users.SingleOrDefaultAsync(candidate => candidate.Email == email);
-            if (user is null)
+            if (user is null ||
+                user.LockoutEndUtc > DateTime.UtcNow)
             {
                 ModelState.AddModelError(string.Empty, "Nieprawidłowy adres e-mail lub hasło.");
                 return View(model);
@@ -101,15 +104,24 @@ namespace MyApp.Controllers
             var verificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, model.Password);
             if (verificationResult == PasswordVerificationResult.Failed)
             {
+                user.FailedLoginAttempts++;
+                if (user.FailedLoginAttempts >= 5)
+                {
+                    user.FailedLoginAttempts = 0;
+                    user.LockoutEndUtc = DateTime.UtcNow.AddMinutes(15);
+                }
+                await _dbContext.SaveChangesAsync();
                 ModelState.AddModelError(string.Empty, "Nieprawidłowy adres e-mail lub hasło.");
                 return View(model);
             }
 
+            user.FailedLoginAttempts = 0;
+            user.LockoutEndUtc = null;
             if (verificationResult == PasswordVerificationResult.SuccessRehashNeeded)
             {
                 user.PasswordHash = _passwordHasher.HashPassword(user, model.Password);
-                await _dbContext.SaveChangesAsync();
             }
+            await _dbContext.SaveChangesAsync();
 
             if (!UserRoles.All.Contains(user.Role, StringComparer.Ordinal))
             {

@@ -611,6 +611,99 @@ body {
   background: #fff;
 }
 
+.sales-report-filter,
+.sales-report-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.sales-report-filter {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.sales-kpi,
+.sales-chart-card {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+}
+
+.sales-kpi {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.sales-kpi span {
+  color: var(--ink-soft);
+  font-size: .9rem;
+}
+
+.sales-kpi strong {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.3rem, 3vw, 2rem);
+}
+
+.sales-chart-scroll {
+  overflow-x: auto;
+  padding: 12px 0 4px;
+}
+
+.sales-chart {
+  display: flex;
+  min-width: max-content;
+  height: 245px;
+  align-items: stretch;
+  gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sales-chart-day {
+  display: flex;
+  width: 52px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.sales-chart-value {
+  min-height: 1em;
+  color: var(--ink-soft);
+  font-size: .68rem;
+}
+
+.sales-chart-track {
+  display: flex;
+  width: 100%;
+  height: 180px;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.sales-chart-bar {
+  display: block;
+  width: 24px;
+  min-height: 2px;
+  border-radius: 5px 5px 0 0;
+  background: linear-gradient(180deg, #f89b25, #c17a08);
+}
+
+.sales-chart-label {
+  padding-bottom: 7px;
+  color: var(--ink-soft);
+  font-size: .68rem;
+  white-space: nowrap;
+}
+
 .order-summary-card {
   display: flex;
   flex-direction: column;
@@ -874,9 +967,32 @@ body {
 }
 
 @media (max-width: 767.98px) {
+  body {
+    margin-bottom: 0;
+  }
+
+  .page-shell {
+    padding: 14px 0 28px;
+  }
+
+  .site-header .navbar {
+    min-height: 62px;
+  }
+
+  .brand-mark {
+    gap: 7px;
+    font-size: 1.08rem;
+  }
+
+  .brand-mark-icon {
+    width: 32px;
+    height: 32px;
+  }
+
   .home-hero {
     min-height: auto;
-    padding: 58px 24px;
+    padding: 42px 22px;
+    border-radius: 0 0 20px 20px;
   }
 
   .home-catalog-cta {
@@ -895,6 +1011,36 @@ body {
 
   .order-summary-grid {
     grid-template-columns: 1fr;
+  }
+
+  .sales-report-filter,
+  .sales-report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-report-filter .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .sales-kpi,
+  .sales-chart-card,
+  .order-info-card,
+  .order-items-card {
+    padding: 17px;
+  }
+
+  .table-responsive {
+    border-radius: 9px;
+  }
+
+  .table-responsive table {
+    min-width: 620px;
+  }
+
+  .site-footer {
+    position: static;
+    margin-top: 20px;
   }
 }
 

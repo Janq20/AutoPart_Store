@@ -113,6 +113,7 @@ else if (User.IsInRole(UserRoles.Administrator))
         <a asp-controller="Admin" asp-action="Categories" class="dashboard-card"><span class="dashboard-icon">⌗</span><strong>Kategorie</strong><small>Porządkuj katalog części</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Admin" asp-action="Users" class="dashboard-card"><span class="dashboard-icon">♙</span><strong>Użytkownicy</strong><small>Zarządzaj rolami i dostępem</small><span class="dashboard-arrow">→</span></a>
         <a asp-controller="Admin" asp-action="Orders" class="dashboard-card"><span class="dashboard-icon">▤</span><strong>Zamówienia</strong><small>Sprawdzaj zakupy i dane klientów</small><span class="dashboard-arrow">→</span></a>
+        <a asp-controller="Admin" asp-action="Reports" class="dashboard-card"><span class="dashboard-icon">▥</span><strong>Raporty sprzedaży</strong><small>Analizuj przychody i zamówienia</small><span class="dashboard-arrow">→</span></a>
     </section>
 }
 else if (User.IsInRole(UserRoles.Employee))
