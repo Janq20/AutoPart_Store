@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 WORKDIR /app
-RUN adduser --disabled-password --gecos "" --uid 10001 appuser \
+RUN useradd --system --uid 10001 --no-create-home appuser \
     && mkdir -p /app/data \
     && chown -R appuser:appuser /app
 USER appuser
